@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1535F50D1BB9BB0D00E18927 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1535F50C1BB9BB0D00E18927 /* main.m */; };
+		1535F5151BB9BB1E00E18927 /* curves.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1535F5131BB9BB1E00E18927 /* curves.cpp */; };
+		1535F5181BB9C21D00E18927 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1535F5171BB9C21D00E18927 /* GLUT.framework */; };
+		1535F51A1BB9C22200E18927 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1535F5191BB9C22200E18927 /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +26,11 @@
 
 /* Begin PBXFileReference section */
 		1535F5091BB9BB0D00E18927 /* CurvesProject */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CurvesProject; sourceTree = BUILT_PRODUCTS_DIR; };
-		1535F50C1BB9BB0D00E18927 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		1535F5131BB9BB1E00E18927 /* curves.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = curves.cpp; sourceTree = "<group>"; };
+		1535F5141BB9BB1E00E18927 /* curves.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curves.h; sourceTree = "<group>"; };
+		1535F5161BB9C1BC00E18927 /* float2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = float2.h; sourceTree = "<group>"; };
+		1535F5171BB9C21D00E18927 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		1535F5191BB9C22200E18927 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +38,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1535F51A1BB9C22200E18927 /* OpenGL.framework in Frameworks */,
+				1535F5181BB9C21D00E18927 /* GLUT.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +49,8 @@
 		1535F5001BB9BB0D00E18927 = {
 			isa = PBXGroup;
 			children = (
+				1535F5191BB9C22200E18927 /* OpenGL.framework */,
+				1535F5171BB9C21D00E18927 /* GLUT.framework */,
 				1535F50B1BB9BB0D00E18927 /* CurvesProject */,
 				1535F50A1BB9BB0D00E18927 /* Products */,
 			);
@@ -57,7 +67,9 @@
 		1535F50B1BB9BB0D00E18927 /* CurvesProject */ = {
 			isa = PBXGroup;
 			children = (
-				1535F50C1BB9BB0D00E18927 /* main.m */,
+				1535F5131BB9BB1E00E18927 /* curves.cpp */,
+				1535F5141BB9BB1E00E18927 /* curves.h */,
+				1535F5161BB9C1BC00E18927 /* float2.h */,
 			);
 			path = CurvesProject;
 			sourceTree = "<group>";
@@ -118,7 +130,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1535F50D1BB9BB0D00E18927 /* main.m in Sources */,
+				1535F5151BB9BB1E00E18927 /* curves.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
