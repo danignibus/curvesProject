@@ -25,6 +25,10 @@
 //keysPressed: global boolean vector denoting whether a key is pressed or not
 std::vector<bool> keysPressed(256, false);
 
+//int selected = -1;
+
+
+
 /**
 Curve class
  */
@@ -34,6 +38,7 @@ public:
     virtual float2 getPoint(float t)=0;
     
     //draw each curve in its own unique color
+    //TODO: none should be in blue
     double color1 = ((double) rand() / (RAND_MAX));
     double color2 = ((double) rand() / (RAND_MAX));
     double color3 = ((double) rand() / (RAND_MAX));
@@ -68,6 +73,11 @@ public:
         }
         glEnd();
     };
+    //TODO: fix this 
+    //add a new method to curve/freeform. takes in cursor position and returns true
+    bool mouseOverCurve(int x, int y) {
+        return false;
+    }
     
 };
 
@@ -79,6 +89,7 @@ class Freeform : public Curve
 {
 protected:
     std::vector<float2> controlPoints;
+    std::vector<int> closeControlPoints;
     
 public:
     virtual float2 getPoint(float t)=0;
@@ -99,7 +110,20 @@ public:
             glEnd();// draw points at control points
         }
     }
+    //TODO: fix and test this func
+    //get closest control points to mouse
+    virtual std::vector<int> getClosestControlPoints(int x, int y) {
+        closeControlPoints.clear();
+        for (int i = 0; i < controlPoints.size(); i++) {
+            if ((fabs(controlPoints[i].x - x) <= 0.05f && fabs(controlPoints[i].y - y) <= 0.05f)) {
+                closeControlPoints.push_back(i);
+            }
+        }
+        return closeControlPoints;
+    }
 };
+
+
 /**
  Polyline class: draws a new polyline where control points clicked
  */
@@ -168,9 +192,8 @@ class BezierCurve : public Freeform
         // add control point to r, weighted
         return r;
     }
-    
 };
-
+Freeform *selectedCurve;
 
 class LagrangeCurve : public Freeform
 {
@@ -214,9 +237,9 @@ public:
         return returnWeight;
     }
     
-//    float2 getDerivative(float t) {
-//        return float2(0.0,0.0);
-//    }
+    float2 getDerivative(float t) {
+        return float2(0.0,0.0);
+    }
     
     float2 getPoint(float t) //calculates a point from the control points
     {
@@ -302,6 +325,8 @@ void onKeyboardUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
+
+
 /**
  onMouse: Checks for mouse clicks. When a mouse is clicked, depending on which key is down, program behaves accordingly.
  */
@@ -309,8 +334,13 @@ void onMouse(int button, int state, int x, int y) {
     int viewportRect[4];
     glGetIntegerv(GL_VIEWPORT, viewportRect);
    
-    Freeform *curvePointer = curves.at(globalCounter);
-    curvePointer->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
+    //check state --> left, right up down
+    if (state == GLUT_DOWN) {
+        Freeform *curvePointer = curves.at(globalCounter);
+        curvePointer->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
+    }
+
+   // selectedCurve = curvePointer;
 
     
 //    if (keysPressed['b'] == true) {
@@ -337,7 +367,9 @@ void onDisplay( ) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPointSize(10);
-    
+    if (selectedCurve != NULL) {
+        selectedCurve->setSelected();
+    }
     curvesContainer.draw();
     curvesContainer.drawControlPoints();
     
