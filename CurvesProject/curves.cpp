@@ -337,7 +337,11 @@ onKeyboard and onKeyboardUp: check for keyboard presses
 void onKeyboard(unsigned char key,int x, int y) {
     if (keysPressed[key] == false) {
         keysPressed[key] = true;
+//        if (selectedCurve != NULL) {
+//            selectedCurve->setUnSelected();
+//        }
         switch (key) {
+                
             case 'b':
                 curvesContainer.addCurve(new BezierCurve());
                 globalCounter ++;
@@ -393,21 +397,29 @@ void onMouse(int button, int state, int x, int y) {
 //    curvePointer->addControlPoint(point2);
 //    curvePointer->addControlPoint(point3);
     //check state --> left, right up down
+    Freeform *curvePointer;
     if (state == GLUT_DOWN) {
         if (drawing == true) {
-            Freeform *curvePointer = curves.at(globalCounter);
+            curvePointer = curves.at(globalCounter);
             curvePointer->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
+            //selectedCurve = curvePointer;
+
         }
         //else, nothing is clicked, so just get closest curve
         else if (drawing == false) {
             if (curves.at(0) != NULL) {
                 int returnVal = curvesContainer.checkMouseCurves(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
                 printf("%d", returnVal);
+                if (selectedCurve != NULL) {
+                    selectedCurve->setUnSelected();
+                }
+                
+                selectedCurve = curves.at(returnVal);
+
             }
         }
     }
 
-   // selectedCurve = curvePointer;
 
     
 //    if (keysPressed['b'] == true) {
@@ -438,6 +450,8 @@ void onDisplay( ) {
         selectedCurve->setSelected();
     }
     curvesContainer.draw();
+    glColor3d(1.0, 1.0, 1.0);
+
     curvesContainer.drawControlPoints();
     
     glutSwapBuffers();                     		// Swap buffers for double buffering
