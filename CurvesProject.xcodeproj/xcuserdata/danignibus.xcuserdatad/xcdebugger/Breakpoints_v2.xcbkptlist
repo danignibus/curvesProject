@@ -10,11 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CurvesProject/curves.cpp"
-            timestampString = "465777235.172933"
+            timestampString = "465821858.126937"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "333"
-            endingLineNumber = "333"
+            startingLineNumber = "382"
+            endingLineNumber = "382"
             landmarkName = "onMouse(int button, int state, int x, int y)"
             landmarkType = "7">
          </BreakpointContent>
@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CurvesProject/curves.cpp"
-            timestampString = "465777235.172933"
+            timestampString = "465821858.126937"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "322"
-            endingLineNumber = "322"
+            startingLineNumber = "369"
+            endingLineNumber = "369"
             landmarkName = "onKeyboardUp(unsigned char key, int x, int y)"
             landmarkType = "7">
          </BreakpointContent>
@@ -42,11 +42,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CurvesProject/curves.cpp"
-            timestampString = "465777235.172933"
+            timestampString = "465820523.016444"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "142"
-            endingLineNumber = "142"
+            startingLineNumber = "175"
+            endingLineNumber = "175"
             landmarkName = "draw()"
             landmarkType = "5">
             <Locations>
