@@ -25,9 +25,8 @@
 //keysPressed: global boolean vector denoting whether a key is pressed or not
 std::vector<bool> keysPressed(256, false);
 bool drawing = false;
-//int selected = -1;
-
-
+bool addingPoints = false;
+int currSelectedCurve;
 
 /**
 Curve class
@@ -77,11 +76,11 @@ public:
         }
         glEnd();
     };
-    //TODO: fix this
-    //add a new method to curve/freeform. takes in cursor position and returns true
+
+    //mouseOverCurve: takes in cursor position and returns true if mouse is over current curve
     //input: current x and y position of the mouse
-    //output: whether the mouse is over that specific curve
-    bool mouseOverCurve(float mouseX, float mouseY) {
+    //output: True if mouse is over this curve, false otherwise.
+    virtual bool mouseOverCurve(float mouseX, float mouseY) {
 
         for (float i = 0; i < 1; i+=.01) {
             //get each point
@@ -98,20 +97,14 @@ public:
             //difference between mouseX and that point x
             float differenceBetweenX = mouseX - pointX;
             float differenceBetweenY = mouseY - pointY;
-//            printf("%f", differenceBetweenX );
-//            printf("%s", " " );
             if (fabs(differenceBetweenX) < .05 && fabs(differenceBetweenY) < .05) {
                 printf("%s", "true");
-
                 return true;
             }
         }
         printf("%s", "false");
-
         return false;
-
     }
-    
 };
 
 
@@ -122,7 +115,7 @@ class Freeform : public Curve
 {
 protected:
     std::vector<float2> controlPoints;
-    std::vector<int> closeControlPoints;
+    std::vector<int> controlPointsNearClick;
     
 public:
     virtual float2 getPoint(float t)=0;
@@ -143,16 +136,33 @@ public:
             glEnd();// draw points at control points
         }
     }
+    int getControlPointsSize() {
+        return controlPoints.size();
+    }
     //TODO: fix and test this func
     //get closest control points to mouse
-    virtual std::vector<int> getClosestControlPoints(int x, int y) {
-        closeControlPoints.clear();
+//    virtual std::vector<int> getControlPointsNearClick(float x, float y) {
+//        controlPointsNearClick.clear();
+//        for (int i = 0; i < controlPoints.size(); i++) {
+//            float ctrlPtX = controlPoints.at(i).x;
+//            float ctrlPtY = controlPoints.at(i).y;
+//            if ((fabs(ctrlPtX - x) < 0.05f && fabs(ctrlPtY - y) < 0.05f)) {
+//                controlPointsNearClick.push_back(i);
+//            }
+//        }
+//        return controlPointsNearClick;
+//    }
+    
+    //get closest control point to mouse
+    int getControlPointNearMouse(float x, float y) {
         for (int i = 0; i < controlPoints.size(); i++) {
-            if ((fabs(controlPoints[i].x - x) <= 0.05f && fabs(controlPoints[i].y - y) <= 0.05f)) {
-                closeControlPoints.push_back(i);
+            float ctrlPtX = controlPoints.at(i).x;
+            float ctrlPtY = controlPoints.at(i).y;
+            if ((fabs(ctrlPtX - x) < 0.05f && fabs(ctrlPtY - y) < 0.05f)) {
+                return i;
             }
         }
-        return closeControlPoints;
+        return -1;
     }
 };
 
@@ -163,23 +173,25 @@ public:
 class Polyline : public Freeform {
 public:
     float2 getPoint(float t) {
-        return float2(0.0, 0.0);
+        float2 ctrlPt = controlPoints.at(t);
+        return ctrlPt;
     }
     //we add a control point
     void addControlPoint(float2 p)
     {
         controlPoints.push_back(p);
     }
-    //should be much like drawControlPoints
+    
+    //like drawControlPoints
     void draw(){
         if (selected) {
             glColor3d(0.0, 0.0, 1.0);
-            glLineWidth(8);
+            glLineWidth(6);
             
         }
         else {
             glColor3d(color1, color2, color3);
-            glLineWidth(4);
+            glLineWidth(3);
         }
         glBegin(GL_LINE_STRIP);
         
@@ -192,6 +204,35 @@ public:
         }
         glEnd();
     };
+    
+    bool mouseOverCurve(float mouseX, float mouseY) {
+        
+        for (float i = 0; i < controlPoints.size(); i++) {
+            //get each point
+            float2 point = controlPoints.at(i);
+            
+            //that point's x
+            float pointX = point.x;
+            printf("%s", "point x: " );
+            printf("%f", pointX );
+            printf("%s", " point y: " );
+            
+            float pointY = point.y;
+            printf("%f", pointY );
+            //difference between mouseX and that point x
+            float differenceBetweenX = mouseX - pointX;
+            float differenceBetweenY = mouseY - pointY;
+            //            printf("%f", differenceBetweenX );
+            //            printf("%s", " " );
+            if (fabs(differenceBetweenX) < .05 && fabs(differenceBetweenY) < .05) {
+                printf("%s", "true");
+                return true;
+            }
+        }
+        printf("%s", "false");
+        return false;
+        
+    }
 };
 
 /**
@@ -228,6 +269,9 @@ class BezierCurve : public Freeform
 };
 Freeform *selectedCurve;
 
+/**
+ LagrangeCurve: extends freeform and implements curve using Lagrange interpolation
+ */
 class LagrangeCurve : public Freeform
 {
     std::vector<float> knots;
@@ -337,33 +381,64 @@ onKeyboard and onKeyboardUp: check for keyboard presses
 void onKeyboard(unsigned char key,int x, int y) {
     if (keysPressed[key] == false) {
         keysPressed[key] = true;
-//        if (selectedCurve != NULL) {
-//            selectedCurve->setUnSelected();
-//        }
+
         switch (key) {
                 
             case 'b':
+                if (selectedCurve != NULL) {
+                    selectedCurve->setUnSelected();}
                 curvesContainer.addCurve(new BezierCurve());
                 globalCounter ++;
                 //TODO for testing: comment out
-                curves.at(globalCounter)->setSelected();
+                //curves.at(globalCounter)->setSelected();
+                selectedCurve = curves.at(globalCounter);
+                currSelectedCurve = globalCounter;
                 drawing = true;
                 break;
             case 'l':
-                //glColor3d(0.8, 0.7, 0.6);
+                if (selectedCurve != NULL) {
+                    selectedCurve->setUnSelected();}
                 curvesContainer.addCurve(new LagrangeCurve());
                 globalCounter ++;
                 //TODO for testing: comment out
-                curves.at(globalCounter)->setSelected();
+                //curves.at(globalCounter)->setSelected();
+                selectedCurve = curves.at(globalCounter);
+                currSelectedCurve = globalCounter;
                 drawing = true;
                 break;
             case 'p':
-                //glColor3d(1.0, 0.5, 0.9);
+                if (selectedCurve != NULL) {
+                    selectedCurve->setUnSelected();}
                 curvesContainer.addCurve(new Polyline());
                 globalCounter ++;
                 //TODO for testing: comment out
-                curves.at(globalCounter)->setSelected();
+                selectedCurve = curves.at(globalCounter);
+                currSelectedCurve = globalCounter;
                 drawing = true;
+                break;
+            case ' ':
+                if (selectedCurve != NULL) {
+                    selectedCurve->setUnSelected();
+                    if (currSelectedCurve +1 <= curves.size() -1) {
+                        currSelectedCurve ++;
+                        selectedCurve = curves.at(currSelectedCurve);
+                        
+                    }
+                    else {
+                        selectedCurve = curves.at(0);
+                        currSelectedCurve = 0;
+                    }
+                }
+                else {
+                    selectedCurve = curves.at(0);
+                    currSelectedCurve = 0;
+                }
+                break;
+            //When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
+            case 'a':
+                if (selectedCurve != NULL) {
+                    addingPoints = true;
+                }
                 break;
         }
     }
@@ -373,8 +448,16 @@ void onKeyboard(unsigned char key,int x, int y) {
 void onKeyboardUp(unsigned char key, int x, int y) {
     keysPressed[key] = false;
     drawing = false;
+    addingPoints = false;
+    Freeform *checkCtrlPtNum = curves.at(globalCounter);
+    int controlPointsSize = checkCtrlPtNum->getControlPointsSize();
+    if (controlPointsSize < 2) {
+        //delete that curve
+        curves.erase(curves.begin() + globalCounter);
+        globalCounter --;
+    }
     //TODO for testing: comment this out
-    curves.at(globalCounter)->setUnSelected();
+ //   curves.at(currSelectedCurve)->setUnSelected();
     glutPostRedisplay();
 }
 
@@ -386,37 +469,40 @@ void onKeyboardUp(unsigned char key, int x, int y) {
 void onMouse(int button, int state, int x, int y) {
     int viewportRect[4];
     glGetIntegerv(GL_VIEWPORT, viewportRect);
-    //TODO: comment in the following lines:
-//    float2 point1 = float2(0.5, 0.1);
-//    float2 point2 = float2(0.6, 0.8);
-//    float2 point3 = float2(-0.5, 0.7);
-    
-//    curvesContainer.addCurve(new BezierCurve());
-//    Freeform *curvePointer = curves.at(0);
-//    curvePointer->addControlPoint(point1);
-//    curvePointer->addControlPoint(point2);
-//    curvePointer->addControlPoint(point3);
+
     //check state --> left, right up down
     Freeform *curvePointer;
     if (state == GLUT_DOWN) {
         if (drawing == true) {
             curvePointer = curves.at(globalCounter);
             curvePointer->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
+            
             //selectedCurve = curvePointer;
 
         }
         //else, nothing is clicked, so just get closest curve
-        else if (drawing == false) {
+        if (drawing == false) {
             if (curves.at(0) != NULL) {
                 int returnVal = curvesContainer.checkMouseCurves(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
                 printf("%d", returnVal);
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();
+                    currSelectedCurve = -1;
                 }
-                
-                selectedCurve = curves.at(returnVal);
-
+                if (returnVal != -1) {
+                    selectedCurve = curves.at(returnVal);
+                    currSelectedCurve = returnVal;
+                    int controlPointVal = selectedCurve->getControlPointNearMouse(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
+//                    if (controlPointVal != -1) {
+//                        //we are currently on a control point
+//                        float2 * controlPointPointer = selectedCurve->controlPoints.at(controlPointVal);
+//                        //so if we let go, we need to drop it in that spot instead
+//                    }
+                }
             }
+        }
+        if (addingPoints) {
+            selectedCurve->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
         }
     }
 
