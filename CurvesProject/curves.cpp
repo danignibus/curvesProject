@@ -205,34 +205,69 @@ public:
         glEnd();
     };
     
+//    bool mouseOverCurve(float mouseX, float mouseY) {
+//        
+//        for (float i = 0; i < controlPoints.size(); i++) {
+//            //get each point
+//            float2 point = controlPoints.at(i);
+//            
+//            //that point's x
+//            float pointX = point.x;
+//            printf("%s", "point x: " );
+//            printf("%f", pointX );
+//            printf("%s", " point y: " );
+//            
+//            float pointY = point.y;
+//            printf("%f", pointY );
+//            //difference between mouseX and that point x
+//            float differenceBetweenX = mouseX - pointX;
+//            float differenceBetweenY = mouseY - pointY;
+//            //            printf("%f", differenceBetweenX );
+//            //            printf("%s", " " );
+//            if (fabs(differenceBetweenX) < .05 && fabs(differenceBetweenY) < .05) {
+//                printf("%s", "true");
+//                return true;
+//            }
+//        }
+//        printf("%s", "false");
+//        return false;
+//        
+//    }
+    
     bool mouseOverCurve(float mouseX, float mouseY) {
-        
-        for (float i = 0; i < controlPoints.size(); i++) {
-            //get each point
-            float2 point = controlPoints.at(i);
-            
-            //that point's x
-            float pointX = point.x;
-            printf("%s", "point x: " );
-            printf("%f", pointX );
-            printf("%s", " point y: " );
-            
-            float pointY = point.y;
-            printf("%f", pointY );
-            //difference between mouseX and that point x
-            float differenceBetweenX = mouseX - pointX;
-            float differenceBetweenY = mouseY - pointY;
-            //            printf("%f", differenceBetweenX );
-            //            printf("%s", " " );
-            if (fabs(differenceBetweenX) < .05 && fabs(differenceBetweenY) < .05) {
-                printf("%s", "true");
+        for (int i = 0; i < controlPoints.size() -1; i++) {
+            bool doesPointExist = pointBetweenCtrlPoints(controlPoints.at(i), controlPoints.at(i+1), mouseX, mouseY);
+            if (doesPointExist) {
                 return true;
             }
         }
-        printf("%s", "false");
         return false;
-        
     }
+    
+    
+    //http://stackoverflow.com/questions/328107/how-can-you-determine-a-point-is-between-two-other-points-on-a-line-segment
+    bool pointBetweenCtrlPoints(float2 ctrlPoint1, float2 ctrlPoint2, float mouseX, float mouseY) {
+        //first, check if cross product of (b-a) and (c-a) is 0
+        float crossProduct = (mouseY - ctrlPoint1.y) * (ctrlPoint2.x - ctrlPoint1.x) - (mouseX - ctrlPoint1.x) * (ctrlPoint2.y - ctrlPoint1.y);
+        if (fabs(crossProduct) > 0.05){
+            return false;
+        }
+        
+        //next, check if dot product is positive
+        float dotProduct = (mouseX - ctrlPoint1.x) * (ctrlPoint2.x - ctrlPoint1.x) + (mouseY - ctrlPoint1.y)*(ctrlPoint2.y - ctrlPoint1.y);
+        if (dotProduct < 0) {
+            return false;
+        }
+        
+        //now, check that dot product is less than square of distance between ctrlPoint1 and ctrlPoint2
+        float lengthSquared = (ctrlPoint2.x - ctrlPoint1.x) * (ctrlPoint2.x - ctrlPoint1.x) + (ctrlPoint2.y - ctrlPoint1.y) * (ctrlPoint2.y - ctrlPoint1.y);
+        if (dotProduct > lengthSquared) {
+            return false;
+        }
+        return true;
+    }
+
+    
 };
 
 /**
