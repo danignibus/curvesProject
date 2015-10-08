@@ -129,9 +129,9 @@ public:
         controlPoints.at(index) = newValue;
     }
     
-    void eraseControlPoint(int point) {
+    virtual void eraseControlPoint(int point) {
         controlPoints.erase(controlPoints.begin() + point);
-    }
+    }//override in lagrange
     
     void drawControlPoints(){
         if (selected) {
@@ -301,6 +301,23 @@ public:
         }
     }
     
+    void eraseControlPoint(int point) {
+        controlPoints.erase(controlPoints.begin() + point);
+        int vecSize = controlPoints.size();
+
+        knots.clear();
+        if (vecSize ==1) {
+            knots.push_back(0);
+            return;
+        }
+        double knotIncrement = 1.0/ (vecSize -1);
+        double counter = 0;
+        for (int i = 0; i < vecSize; i++) {
+            knots[i] = counter;
+            counter += knotIncrement;
+        }
+    }
+    
     double lagrange(int i, int n, double t) {
         //i is index of control point, n is one less than number of control points
         //t0, t1, ...tn-1 are the knot values: must be chosen by modeler just like control points
@@ -320,7 +337,7 @@ public:
         double returnWeight = numerator/denominator;
         return returnWeight;
     }
-    
+    //on delete, readjust
     float2 getDerivative(float t) {
         return float2(0.0,0.0);
     }
@@ -396,39 +413,38 @@ void onKeyboard(unsigned char key,int x, int y) {
                     selectedCurve->setUnSelected();}
                 curvesContainer.addCurve(new BezierCurve());
                 globalCounter ++;
-                //TODO for testing: comment out
-                //curves.at(globalCounter)->setSelected();
                 selectedCurve = curves.at(globalCounter);
                 currSelectedCurve = globalCounter;
                 drawing = true;
                 break;
+                
             case 'l':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();}
                 curvesContainer.addCurve(new LagrangeCurve());
                 globalCounter ++;
-                //TODO for testing: comment out
-                //curves.at(globalCounter)->setSelected();
                 selectedCurve = curves.at(globalCounter);
                 currSelectedCurve = globalCounter;
                 drawing = true;
                 break;
+                
             case 'p':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();}
                 curvesContainer.addCurve(new Polyline());
                 globalCounter ++;
-                //TODO for testing: comment out
                 selectedCurve = curves.at(globalCounter);
                 currSelectedCurve = globalCounter;
                 drawing = true;
                 break;
+                
             //if d is selected and a curve is currently selected, and a control point is picked, delete that control point
             case 'd':
                 if (selectedCurve!=NULL) {
                     deletingPoints = true;
                 }
                 break;
+                
             case ' ':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();
@@ -447,6 +463,7 @@ void onKeyboard(unsigned char key,int x, int y) {
                 }
                 break;
             //When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
+                
             case 'a':
                 if (selectedCurve != NULL) {
                     drawing = false;
@@ -504,7 +521,6 @@ void onMouse(int button, int state, int x, int y) {
             if (pointToDelete != -1) {
                 selectedCurve->eraseControlPoint(pointToDelete);
             }
-            
         }
         
         //on a mouse click, if we're not drawing, see if we're pressing a curve or a point
@@ -516,12 +532,11 @@ void onMouse(int button, int state, int x, int y) {
                     selectedCurve->setUnSelected();
                     currSelectedCurve = -1;
                 }
+                
                 if (returnVal != -1) {
                     selectedCurve = curves.at(returnVal);
                     currSelectedCurve = returnVal;
                 }
-                
-                
                 //else, if returnVal = -1 no curve should be selected on click
                 else {
                     if (selectedCurve != NULL) {
@@ -553,6 +568,20 @@ void onMouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
+void onMouseMotionFunc(int x, int y) {
+    int viewportRect[4];
+    glGetIntegerv(GL_VIEWPORT, viewportRect);
+    if (movingAPoint) {
+        printf("%s", "true");
+        float2 xAndY = float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
+        selectedCurve->setNewControlPointValue(controlPointVal, xAndY);
+    }
+    glutPostRedisplay();
+}
+
+//mouseMotionFunc
+//do every time mouse is moved
+
 void onDisplay( ) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -562,7 +591,6 @@ void onDisplay( ) {
     }
     curvesContainer.draw();
     glColor3d(1.0, 1.0, 1.0);
-
     curvesContainer.drawControlPoints();
     
     glutSwapBuffers();                     		// Swap buffers for double buffering
@@ -584,6 +612,7 @@ int main(int argc, char *argv[]) {
     //glutReshapeFunc(onReshape);
     glutMouseFunc(onMouse);
     glutDisplayFunc(onDisplay);                	// Register event handlers
+    glutMotionFunc(onMouseMotionFunc);
     //   glutIdleFunc(onIdle);
     
     glutMainLoop();                    			// Event loop
