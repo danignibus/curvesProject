@@ -22,7 +22,7 @@
 #include <GLUT/glut.h>
 #include "curves.h"
 
-//keysPressed: global boolean vector denoting whether a key is pressed or not
+//defining global variables
 std::vector<bool> keysPressed(256, false);
 bool drawing = false;
 bool addingPoints = false;
@@ -30,6 +30,8 @@ bool deletingPoints = false;
 bool movingAPoint = false;
 int currSelectedCurve;
 int controlPointVal;
+bool addingFirstCurve = true;
+
 
 /**
 Curve class: Defines a virtual curve that the curves in this project inherit from
@@ -43,6 +45,7 @@ public:
     double color2 = ((double) rand() / (RAND_MAX));
     double color3 = ((double) rand() / (RAND_MAX));
     bool selected = false;
+
     
     virtual float2 getPoint(float t)=0;
     
@@ -56,6 +59,19 @@ public:
     
     //virtual method, since draw in Polyline overrides it
     virtual void draw(){
+        
+        if (addingFirstCurve) {
+            if (color1 < 0.5) {
+                color1 += 0.4;
+            }
+            if (color2 < 0.5) {
+                color2 += 0.4;
+            }
+            if (color3 > 0.5) {
+                color3 -= 0.4;
+            }
+            addingFirstCurve = false;
+        }
         
         //if curve is selected, draw it in blue with double width
         if (selected) {
@@ -166,7 +182,7 @@ public:
         return -1;
     }
 };
-
+std::vector<Freeform*> curves;
 
 /**
  Polyline class: draws a new polyline where control points are clicked.
@@ -350,6 +366,7 @@ public:
         for (float i = 0; i < controlPoints.size(); i++) {
             // compute weight using the Bernstein formula
             weight = lagrange(i, controlPoints.size()-1, t);
+            printf("%d\n", weight);
             r += controlPoints.at(i)*weight;
         }
         // add control point to r, weighted
@@ -357,8 +374,6 @@ public:
     }
 };
 
-
-std::vector<Freeform*> curves;
 
 //this class manages all the objects. we store object pointers.
 class CurvesContainer
@@ -399,15 +414,18 @@ CurvesContainer curvesContainer;
 int globalCounter = -1;
 
 /**
-onKeyboard and onKeyboardUp: check for keyboard presses
+onKeyboard: checks for keyboard presses. 
+Each time a user presses a key that indicates they want to draw that type of curve (ie p, l, b), a new curve should be added to the respective vector. 
+ If the user presses a, sets a boolean to true indicating that we are now appending points.
+ If the user presses d, sets a boolean to true indicating that we are now deleting points.
  */
-//each time a user presses a key, add a new curve to the respective vector
 void onKeyboard(unsigned char key,int x, int y) {
     if (keysPressed[key] == false) {
         keysPressed[key] = true;
 
         switch (key) {
-                
+            
+            //add a bezier curve
             case 'b':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();}
@@ -418,6 +436,7 @@ void onKeyboard(unsigned char key,int x, int y) {
                 drawing = true;
                 break;
                 
+            //add a lagrange curve
             case 'l':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();}
@@ -427,7 +446,8 @@ void onKeyboard(unsigned char key,int x, int y) {
                 currSelectedCurve = globalCounter;
                 drawing = true;
                 break;
-                
+            
+            //add a polyline
             case 'p':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();}
@@ -438,13 +458,14 @@ void onKeyboard(unsigned char key,int x, int y) {
                 drawing = true;
                 break;
                 
-            //if d is selected and a curve is currently selected, and a control point is picked, delete that control point
+            //deleting points
             case 'd':
                 if (selectedCurve!=NULL) {
                     deletingPoints = true;
                 }
                 break;
-                
+            
+            //cycle through all curves
             case ' ':
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();
@@ -458,14 +479,17 @@ void onKeyboard(unsigned char key,int x, int y) {
                     }
                 }
                 else {
-                    selectedCurve = curves.at(0);
-                    currSelectedCurve = 0;
+                    if (selectedCurve != NULL) {
+                        selectedCurve = curves.at(0);
+                        currSelectedCurve = 0;
+                    }
+
                 }
                 break;
-            //When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
-                
+            
+            //appending points
             case 'a':
-                if (selectedCurve != NULL) {
+                if (selectedCurve != NULL && curves.at(0) != NULL) {
                     drawing = false;
                     addingPoints = true;
                 }
@@ -473,22 +497,28 @@ void onKeyboard(unsigned char key,int x, int y) {
         }
     }
     glutPostRedisplay();
-    
 }
+
+/**
+ onKeyboardUp: checks for keys coming up
+When a key is lifted, all booleans are reset to false and we make sure that there are no curves with less than 2 control points.
+ */
 void onKeyboardUp(unsigned char key, int x, int y) {
     keysPressed[key] = false;
     drawing = false;
     addingPoints = false;
     deletingPoints = false;
-    Freeform *checkCtrlPtNum = curves.at(globalCounter);
-    int controlPointsSize = checkCtrlPtNum->getControlPointsSize();
-    if (controlPointsSize < 2) {
-        //delete that curve
-        curves.erase(curves.begin() + globalCounter);
-        globalCounter --;
+    if (curves.size() > 0) {
+        Freeform *checkCtrlPtNum = curves.at(globalCounter);
+        int controlPointsSize = checkCtrlPtNum->getControlPointsSize();
+        if (controlPointsSize < 2) {
+            //delete that curve
+            curves.erase(curves.begin() + globalCounter);
+            globalCounter --;
+            currSelectedCurve = -1;
+            selectedCurve = NULL;
+        }
     }
-    //TODO for testing: comment this out
-  //  curves.at(currSelectedCurve)->setUnSelected();
     glutPostRedisplay();
 }
 
@@ -504,7 +534,11 @@ void onMouse(int button, int state, int x, int y) {
 
     //check state --> left, right up down
     Freeform *curvePointer;
+    
+    //Case: mouse is pressed
     if (state == GLUT_DOWN) {
+        
+        //if we're currently drawing one of the curves (p, b, or l is pressed)
         if (drawing == true) {
             curvePointer = curves.at(globalCounter);
             curvePointer->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
@@ -512,20 +546,29 @@ void onMouse(int button, int state, int x, int y) {
             selectedCurve = curvePointer;
 
         }
+        
         //else, nothing is clicked, so just get closest curve
         if (addingPoints) {
             selectedCurve->addControlPoint( float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0));
         }
+        
         if (deletingPoints) {
             int pointToDelete = selectedCurve->getControlPointNearMouse(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
             if (pointToDelete != -1) {
                 selectedCurve->eraseControlPoint(pointToDelete);
             }
+            if (selectedCurve->getControlPointsSize() <2) {
+                curves.erase(curves.begin() + currSelectedCurve);
+                currSelectedCurve = -1;
+                globalCounter --;
+                selectedCurve = NULL;
+            }
         }
         
-        //on a mouse click, if we're not drawing, see if we're pressing a curve or a point
+        //on a mouse click, if we're not drawing, see if we're currently touching a curve or a point
         else if (drawing == false) {
-            if (curves.at(0) != NULL) {
+            //changed this from curves.at(0) != NULL
+            if (curves.size() >0) {
                 int returnVal = curvesContainer.checkMouseCurves(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
                 printf("%d", returnVal);
                 if (selectedCurve != NULL) {
@@ -542,21 +585,24 @@ void onMouse(int button, int state, int x, int y) {
                     if (selectedCurve != NULL) {
                         printf("%s", "got in here");
                         selectedCurve->setUnSelected();
+                        
                         currSelectedCurve = -1;
                     }
                 }
+                controlPointVal = selectedCurve->getControlPointNearMouse(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
+                
+                if (controlPointVal != -1) {
+                    //we are currently on a control point
+                    movingAPoint = true;
+                    // float2 *controlPointPointer = selectedCurve->getControlPoint(controlPointVal);
+                    
+                }
             }
-            controlPointVal = selectedCurve->getControlPointNearMouse(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
             
-            if (controlPointVal != -1) {
-                //we are currently on a control point
-                movingAPoint = true;
-               // float2 *controlPointPointer = selectedCurve->getControlPoint(controlPointVal);
-
-            }
         }
     }
     
+    //when we let go of a point we've been dragging, it should remain at the spot where we lift the mouse
     if (state == GLUT_UP) {
         if (movingAPoint) {
             float2 xAndY = float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
@@ -568,6 +614,9 @@ void onMouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
+/**
+ onMouseMotionFunc: Will constantly set new control point value if control point is currently being moved.
+ */
 void onMouseMotionFunc(int x, int y) {
     int viewportRect[4];
     glGetIntegerv(GL_VIEWPORT, viewportRect);
@@ -579,8 +628,6 @@ void onMouseMotionFunc(int x, int y) {
     glutPostRedisplay();
 }
 
-//mouseMotionFunc
-//do every time mouse is moved
 
 void onDisplay( ) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

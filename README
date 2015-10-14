@@ -16,7 +16,7 @@ Implemented features are:
 	-implemented for Bezier
 	-implemented for Polyline
 3. When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
-4. Support removing control points of the selected curve, by holding 'D' and (approximately) clicking them. [10 pts]
+4. Support removing control points of the selected curve, by holding 'D' and (approximately) clicking them. Note: it is assumed that the user will delete every control point, even the final solo control point, as discussed with Professor. [10 pts]
 5. Support dragging control points of the selected curve. [15 pts]
 6. Support polylines, created by clicking control points while holding key 'P'. [10 pts]
 7. Lagrange curves, created by clicking control points while holding key 'L'. [20 pts]

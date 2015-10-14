@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>0CADBF2A-D3C4-4764-A1AF-FC3B64843D27</string>
 	<key>IDESourceControlProjectName</key>
-	<string>project</string>
+	<string>CurvesProject</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>81EC20F57D344BD08E188687173F58174CC047BA</key>
 		<string>https://github.com/danignibus/curvesProject.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>CurvesProject.xcodeproj/project.xcworkspace</string>
+	<string>CurvesProject.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>81EC20F57D344BD08E188687173F58174CC047BA</key>
