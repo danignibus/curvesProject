@@ -30,8 +30,6 @@ bool deletingPoints = false;
 bool movingAPoint = false;
 int currSelectedCurve;
 int controlPointVal;
-bool addingFirstCurve = true;
-
 
 /**
 Curve class: Defines a virtual curve that the curves in this project inherit from
@@ -40,12 +38,19 @@ class Curve {
     
 public:
     //draw each curve in its own unique color
-    //TODO: none should be in blue
-    double color1 = ((double) rand() / (RAND_MAX));
-    double color2 = ((double) rand() / (RAND_MAX));
-    double color3 = ((double) rand() / (RAND_MAX));
+    int curveType;
+    
+    Curve(int curveType) : curveType(curveType) {}
+//    double color1 = ((double) rand() / (RAND_MAX));
+//    double color2 = ((double) rand() / (RAND_MAX));
+//    double color3 = ((double) rand() / (RAND_MAX));
+    double color1, color2, color3;
     bool selected = false;
 
+
+    int getCurveType() {
+        return curveType;
+    }
     
     virtual float2 getPoint(float t)=0;
     
@@ -60,18 +65,7 @@ public:
     //virtual method, since draw in Polyline overrides it
     virtual void draw(){
         
-        if (addingFirstCurve) {
-            if (color1 < 0.5) {
-                color1 += 0.4;
-            }
-            if (color2 < 0.5) {
-                color2 += 0.4;
-            }
-            if (color3 > 0.5) {
-                color3 -= 0.4;
-            }
-            addingFirstCurve = false;
-        }
+
         
         //if curve is selected, draw it in blue with double width
         if (selected) {
@@ -81,6 +75,20 @@ public:
         
         //else, draw in a random color
         else {
+            //polyline coloring taken care of in polyline class
+            if (curveType ==1.0) {
+                color1 = 0.2;
+                color2 = 0.9;
+                color3 = 0.2;
+            }
+            //lagrange coloring
+            else {
+                color1 = 1.0;
+                color2 = 0.4;
+                color3 = 0.7;
+            }
+
+            
             glColor3d(color1, color2, color3);
             glLineWidth(3);
         }
@@ -125,11 +133,15 @@ Freeform class. Contains additional methods for dealing with control points: get
  */
 class Freeform : public Curve
 {
+
 protected:
     std::vector<float2> controlPoints;
     std::vector<int> controlPointsNearClick;
     
 public:
+    
+    Freeform(int curveType) : Curve(curveType) {}
+
     virtual float2 getPoint(float t)=0;
     
     virtual void addControlPoint(float2 p)
@@ -189,6 +201,9 @@ std::vector<Freeform*> curves;
  */
 class Polyline : public Freeform {
 public:
+   // curveType = 0;
+    Polyline() : Freeform(0.0) {}
+    
     float2 getPoint(float t) {
         return float2(0.0, 0.0);
     }
@@ -206,7 +221,7 @@ public:
         }
         
         else {
-            glColor3d(color1, color2, color3);
+            glColor3d(0.6, 0.1, 0.8);
             glLineWidth(3);
         }
         glBegin(GL_LINE_STRIP);
@@ -264,6 +279,9 @@ public:
 class BezierCurve : public Freeform
 
 {
+    public:
+    BezierCurve() : Freeform(1.0) {}
+
     static double bernstein(int i, int n, double t) {
         //i is index of control point, n is one less than number of control points
         if(n == 1) {
@@ -299,6 +317,7 @@ class LagrangeCurve : public Freeform
 {
     std::vector<float> knots;
 public:
+    LagrangeCurve() : Freeform(2) {}
     
     void addControlPoint(float2 p)
     {
@@ -353,7 +372,7 @@ public:
         double returnWeight = numerator/denominator;
         return returnWeight;
     }
-    //on delete, readjust
+
     float2 getDerivative(float t) {
         return float2(0.0,0.0);
     }
@@ -366,7 +385,6 @@ public:
         for (float i = 0; i < controlPoints.size(); i++) {
             // compute weight using the Bernstein formula
             weight = lagrange(i, controlPoints.size()-1, t);
-            printf("%d\n", weight);
             r += controlPoints.at(i)*weight;
         }
         // add control point to r, weighted
@@ -522,8 +540,6 @@ void onKeyboardUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-
-
 /**
  onMouse: Checks for mouse clicks. When a mouse is clicked, depending on which key is down, program behaves accordingly.
  */
@@ -570,7 +586,6 @@ void onMouse(int button, int state, int x, int y) {
             //changed this from curves.at(0) != NULL
             if (curves.size() >0) {
                 int returnVal = curvesContainer.checkMouseCurves(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
-                printf("%d", returnVal);
                 if (selectedCurve != NULL) {
                     selectedCurve->setUnSelected();
                     currSelectedCurve = -1;
@@ -580,23 +595,24 @@ void onMouse(int button, int state, int x, int y) {
                     selectedCurve = curves.at(returnVal);
                     currSelectedCurve = returnVal;
                 }
-                //else, if returnVal = -1 no curve should be selected on click
+
                 else {
                     if (selectedCurve != NULL) {
-                        printf("%s", "got in here");
                         selectedCurve->setUnSelected();
-                        
+                       // selectedCurve = NULL;
                         currSelectedCurve = -1;
                     }
                 }
-                controlPointVal = selectedCurve->getControlPointNearMouse(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
-                
-                if (controlPointVal != -1) {
-                    //we are currently on a control point
-                    movingAPoint = true;
-                    // float2 *controlPointPointer = selectedCurve->getControlPoint(controlPointVal);
+                if (selectedCurve != NULL) {
+                    controlPointVal = selectedCurve->getControlPointNearMouse(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
                     
+                    if (controlPointVal != -1) {
+                        //we are currently on a control point
+                        movingAPoint = true;
+                        // float2 *controlPointPointer = selectedCurve->getControlPoint(controlPointVal);
+                    }
                 }
+                
             }
             
         }
@@ -621,7 +637,6 @@ void onMouseMotionFunc(int x, int y) {
     int viewportRect[4];
     glGetIntegerv(GL_VIEWPORT, viewportRect);
     if (movingAPoint) {
-        printf("%s", "true");
         float2 xAndY = float2(x * 2.0 / viewportRect[2] - 1.0, -y * 2.0 / viewportRect[3] + 1.0);
         selectedCurve->setNewControlPointValue(controlPointVal, xAndY);
     }
@@ -652,7 +667,7 @@ int main(int argc, char *argv[]) {
     glutInitWindowSize(640, 480);				// Initial resolution of the MsWindows Window is 600x600 pixels
     glutInitWindowPosition(100, 100);            // Initial location of the MsWindows window
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);    // Image = 8 bit R,G,B + double buffer + depth buffer
-    glutCreateWindow("Hello");        	// Window is born
+    glutCreateWindow("Curves Editor");        	// Window is born
     
     glutKeyboardFunc(onKeyboard);
     glutKeyboardUpFunc(onKeyboardUp);

@@ -3,15 +3,15 @@ Curves Project README
 
 This program displays any reasonable number of curves. The user can create an object by holding down a specified key and clicking on the screen to add control points to that curve. The curves available to the user to draw are:
 
-1. polylines (specified by holding down 'p')
-2. bezier curves (specified by holding down 'b')
-3. lagrange curves (specified by holding down 'l')
+1. polylines (specified by holding down 'p') --  drawn in PURPLE
+2. bezier curves (specified by holding down 'b') -- drawn in BRIGHT GREEN
+3. lagrange curves (specified by holding down 'l') -- drawn in PINK
 
 The user can also edit curves. If he holds down 'd' and selects control points on the current selected curve, these points will be deleted from that specific curve. If he holds down 'a' and clicks on the screen, curves will be appended to the current selected curve. 
 
 Implemented features are:
 1. Pressing SPACE makes the next object selected instead of the current one, repeatedly pressing SPACE cycles over all curves. [5 pts]
-2. When no keys are pressed and the user presses the mouse button, the object (approximately) at the mouse cursor (if there is any) becomes selected. [15 pts]
+2. When no keys are pressed and the user presses the mouse button, the object (approximately) at the mouse cursor (if there is any) becomes selected. [15 pts] NOTE: the object that is selected will be the first object in the curves container that is closest to the selected point; also, a curve will always be selected at some point--whether it's the most recent one drawn or selected (as discussed with Professor)
 	-implemented for Lagrange
 	-implemented for Bezier
 	-implemented for Polyline
@@ -21,4 +21,6 @@ Implemented features are:
 6. Support polylines, created by clicking control points while holding key 'P'. [10 pts]
 7. Lagrange curves, created by clicking control points while holding key 'L'. [20 pts]
 8. Bezier curves, created by clicking control points while holding key 'B'. [20 pts]
+
+So, total number of points implemented: 5 + 15 + 5 + 10 + 15 + 10 + 20 + 20
 
